@@ -18,11 +18,23 @@ def generate():
     topic = data.get('topic')
     grade = data.get('grade')
     language = data.get('language')
+    subject = data.get('subject', 'General')
+    duration = data.get('duration', '60')
+    teaching_style = data.get('teaching_style', 'Interactive')
+    difficulty = data.get('difficulty', 'Intermediate')
     
     try:
         logger.info(f"Processing generation request for topic='{topic}'")
         # Call the GenAI service (currently mocked)
-        result_markdown = generate_lesson_content(topic, grade, language)
+        result_markdown = generate_lesson_content(
+            topic=topic,
+            grade=grade,
+            language=language,
+            subject=subject,
+            duration=duration,
+            teaching_style=teaching_style,
+            difficulty=difficulty
+        )
         logger.info(f"Successfully generated content for topic='{topic}'")
         return jsonify({
             "success": True,

@@ -45,16 +45,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3500);
     }
 
+    // Tab Navigation Logic
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+            
+            btn.classList.add('active');
+            const target = btn.getAttribute('data-tab');
+            document.getElementById(target).classList.add('active');
+        });
+    });
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         // Get values
         const topic = document.getElementById('topic').value.trim();
+        const subject = document.getElementById('subject').value.trim();
         const grade = document.getElementById('grade').value;
         const language = document.getElementById('language').value;
+        const duration = document.getElementById('duration').value;
+        const teaching_style = document.getElementById('teaching_style').value;
+        const difficulty = document.getElementById('difficulty').value;
 
         if (!topic || !grade || !language) {
-            showToast("Please fill out all fields.");
+            showToast("Please fill out all required fields.");
             return;
         }
 
@@ -68,10 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Send request to backend
             const response = await fetch('/api/generate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ topic, grade, language })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, subject, grade, language, duration, teaching_style, difficulty })
             });
 
             const data = await response.json();
@@ -79,58 +96,103 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok && data.success) {
                 const lessonJson = data.data.content;
                 
-                // Construct Markdown from the structured JSON
-                let rawMarkdown = `# ${lessonJson.title || 'Lesson Plan'}\n\n`;
-                rawMarkdown += `**Grade Level:** ${grade} | **Language:** ${language}\n\n`;
-                
-                rawMarkdown += `## 🎯 Objectives\n`;
-                if (lessonJson.objectives && lessonJson.objectives.length > 0) {
-                    lessonJson.objectives.forEach(obj => {
-                        rawMarkdown += `- ${obj}\n`;
+                // 1. Render Overview (Dashboard)
+                let overviewHtml = `<div class="dashboard-grid">`;
+                if(lessonJson.metadata) {
+                    overviewHtml += `
+                        <div class="metric-card"><h4>Duration</h4><div class="value">${lessonJson.metadata.duration || duration + ' min'}</div></div>
+                        <div class="metric-card"><h4>Difficulty</h4><div class="value">${lessonJson.metadata.difficulty || difficulty}</div></div>
+                        <div class="metric-card"><h4>Grade</h4><div class="value">${lessonJson.metadata.grade || grade}</div></div>
+                        <div class="metric-card"><h4>Activities</h4><div class="value">${lessonJson.metadata.activities_count || 0}</div></div>
+                        <div class="metric-card"><h4>Reading Time</h4><div class="value">${lessonJson.metadata.reading_time || '5 min'}</div></div>
+                    `;
+                }
+                overviewHtml += `</div><h3>Learning Outcomes</h3><ul class="outcomes-list">`;
+                if(lessonJson.learning_outcomes) {
+                    lessonJson.learning_outcomes.forEach(outcome => {
+                        overviewHtml += `<li>${outcome}</li>`;
                     });
                 }
-                rawMarkdown += `\n`;
-                
-                rawMarkdown += `## 📖 Explanation\n`;
-                rawMarkdown += `${lessonJson.explanation || ''}\n\n`;
-                
-                rawMarkdown += `## 🚀 Classroom Activity\n`;
-                rawMarkdown += `${lessonJson.activity || ''}\n\n`;
-                
-                rawMarkdown += `## 📝 Summary\n`;
-                rawMarkdown += `${lessonJson.summary || ''}\n\n`;
-                
-                rawMarkdown += `## ❓ Quiz (Multiple Choice)\n`;
-                if (lessonJson.mcqs && lessonJson.mcqs.length > 0) {
-                    lessonJson.mcqs.forEach((mcq, index) => {
-                        rawMarkdown += `**${index + 1}. ${mcq.question || ''}**\n`;
+                overviewHtml += `</ul>`;
+                document.getElementById('tab-overview').innerHTML = overviewHtml;
+
+                // 2. Render Lesson Plan (Collapsible sections)
+                let lessonHtml = ``;
+                if(lessonJson.sections) {
+                    lessonJson.sections.forEach(section => {
+                        lessonHtml += `
+                            <details class="lesson-section" open>
+                                <summary>${section.title || 'Section'} <span style="font-weight:normal; font-size:0.9em; opacity:0.8;">⏱ ${section.estimated_time || ''}</span></summary>
+                                <div class="lesson-section-content">
+                                    ${section.teacher_notes ? `<strong>Teacher Notes:</strong> ${section.teacher_notes}<br><br>` : ''}
+                                    ${marked.parse(section.content || '')}
+                                </div>
+                            </details>
+                        `;
+                    });
+                }
+                document.getElementById('tab-lesson').innerHTML = lessonHtml;
+
+                // 3. Render Timeline
+                let timelineHtml = `<div class="timeline">`;
+                if(lessonJson.timeline) {
+                    lessonJson.timeline.forEach(item => {
+                        timelineHtml += `
+                            <div class="timeline-item">
+                                <div class="timeline-content">
+                                    <div class="timeline-time">${item.time}</div>
+                                    <h4>${item.title}</h4>
+                                    <p>${item.description}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                timelineHtml += `</div>`;
+                document.getElementById('tab-timeline').innerHTML = timelineHtml;
+
+                // 4. Render Topic Map
+                document.getElementById('tab-map').innerHTML = `<div class="tree-map">${lessonJson.topic_map || 'No map available'}</div>`;
+
+                // 5. Render Activities
+                let activitiesHtml = ``;
+                if(lessonJson.student_engagement) {
+                    lessonJson.student_engagement.forEach(act => {
+                        activitiesHtml += `<h3>${act.type}</h3><p>${act.prompt}</p><hr>`;
+                    });
+                }
+                document.getElementById('tab-activities').innerHTML = marked.parse(activitiesHtml);
+
+                // 6. Render Quiz
+                let quizHtml = ``;
+                if (lessonJson.quiz && lessonJson.quiz.length > 0) {
+                    lessonJson.quiz.forEach((mcq, index) => {
+                        quizHtml += `**${index + 1}. ${mcq.question || ''}**\n`;
                         if (mcq.options) {
                             mcq.options.forEach(opt => {
-                                rawMarkdown += `   - ${opt}\n`;
+                                quizHtml += `   - ${opt}\n`;
                             });
                         }
-                        rawMarkdown += `\n`;
+                        quizHtml += `\n**Answer:** ${mcq.answer}\n\n`;
                     });
                 }
-                
-                rawMarkdown += `## ✅ Answer Key\n`;
-                if (lessonJson.mcqs && lessonJson.mcqs.length > 0) {
-                    lessonJson.mcqs.forEach((mcq, index) => {
-                        rawMarkdown += `- **Q${index + 1}:** ${mcq.answer || ''}\n`;
-                    });
-                }
+                document.getElementById('tab-quiz').innerHTML = marked.parse(quizHtml);
 
-                // Parse markdown to HTML using marked.js
-                const htmlContent = marked.parse(rawMarkdown);
+                // 7. Render Homework
+                document.getElementById('tab-homework').innerHTML = marked.parse(lessonJson.homework || 'No homework assigned.');
+
+                // 8. Render Teacher Notes
+                let notesHtml = `### Teacher Tips\n${lessonJson.teacher_tips || ''}\n\n### Common Misconceptions\n${lessonJson.common_misconceptions || ''}`;
+                document.getElementById('tab-notes').innerHTML = marked.parse(notesHtml);
                 
-                // Inject HTML
-                contentContainer.innerHTML = htmlContent;
+                // For copy functionality, we store raw JSON representation for now (or a flat text summary)
+                document.getElementById('content-container').innerText = JSON.stringify(lessonJson, null, 2);
                 
-                // Show results
+                // Show results and switch to Overview tab
                 loadingState.classList.add('hidden');
                 resultsArea.classList.remove('hidden');
+                tabBtns[0].click(); // Activate first tab
                 
-                // Scroll to results
                 resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
                 throw new Error(data.error || 'Failed to generate content');

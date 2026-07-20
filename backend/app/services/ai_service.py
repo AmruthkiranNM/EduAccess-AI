@@ -15,13 +15,11 @@ def _extract_json(text: str) -> str:
     return text.strip()
 
 
-def generate_lesson_content(topic: str, grade: str, language: str) -> dict:
+def generate_lesson_content(topic: str, grade: str, language: str, subject: str = "General", duration: str = "60", teaching_style: str = "Interactive", difficulty: str = "Intermediate") -> dict:
     """
-    Generate lesson content using the Groq API.
-    Uses prompt engineering to request JSON output and parses the result robustly.
-    Falls back to a smaller model if the primary one fails.
+    Generate complex teaching assistant content using the Groq API.
     """
-    logger.info(f"Generating AI content for topic='{topic}', grade='{grade}', language='{language}'")
+    logger.info(f"Generating AI content for topic='{topic}', subject='{subject}', grade='{grade}', duration='{duration}m'")
     
     api_key = Config.GROQ_API_KEY
     if not api_key:
@@ -33,26 +31,72 @@ def generate_lesson_content(topic: str, grade: str, language: str) -> dict:
         logger.error(f"Failed to initialize Groq client: {e}")
         raise Exception("Failed to initialize AI client. Check configuration.")
     
-    prompt = f"""You are an expert educator. Create a comprehensive lesson plan for the following:
+    prompt = f"""You are an expert master teacher and curriculum designer. Create a highly detailed, professional lesson plan for the following:
 Topic: {topic}
+Subject: {subject}
 Grade Level: {grade}
 Language: {language}
+Duration: {duration} minutes
+Teaching Style: {teaching_style}
+Difficulty: {difficulty}
 
 You MUST respond entirely in {language}.
+You MUST adapt the depth and number of activities strictly to the {duration}-minute time constraint.
 You MUST respond with ONLY a valid JSON object — no markdown, no extra text, no code fences.
 
-The JSON object must have exactly these keys:
-- "title": (string) Lesson title
-- "objectives": (array of strings) 3-4 clear learning objectives
-- "explanation": (string) A clear explanation of the core concepts (2-3 paragraphs)
-- "activity": (string) A highly engaging classroom activity description
-- "summary": (string) A brief summary of the lesson
-- "mcqs": (array of objects) Exactly 5 multiple-choice questions. Each object must have:
-    - "question": (string) The question text
-    - "options": (array of 4 strings) e.g. ["A) Option one", "B) Option two", "C) Option three", "D) Option four"]
-    - "answer": (string) The correct option letter and text, e.g. "A) Option one"
+The JSON object MUST follow this EXACT structure and keys:
+{{
+  "metadata": {{
+    "duration": "{duration} minutes",
+    "difficulty": "{difficulty}",
+    "grade": "{grade}",
+    "language": "{language}",
+    "activities_count": (integer) total number of activities,
+    "reading_time": (string) estimated reading time for the teacher,
+    "topic": "{topic}",
+    "subject": "{subject}"
+  }},
+  "learning_outcomes": [
+    "Explain...", "Identify...", "Solve..." (3-5 bullet points)
+  ],
+  "timeline": [
+    {{
+      "time": "0-5 min",
+      "title": "Introduction",
+      "description": "Brief description of what happens."
+    }}
+    // Add items to fill exactly {duration} minutes.
+  ],
+  "topic_map": (string) "A text-based tree representing the hierarchy of concepts. Use ├── and └──.",
+  "sections": [
+    {{
+      "title": (string) Section Title (e.g. 'Introduction', 'Main Concept 1', 'Activity'),
+      "estimated_time": (string) e.g. "10 min",
+      "teacher_notes": (string) Tips for the teacher,
+      "content": (string) The actual detailed content, explanation, or examples. Use markdown formatting inside the string (e.g. **bold**, bullet points).
+    }}
+    // Add as many sections as needed based on duration.
+  ],
+  "student_engagement": [
+    {{
+      "type": (string) e.g. "Think-Pair-Share", "Discussion Question", "Class Poll", "Group Activity",
+      "prompt": (string) The question or activity prompt
+    }}
+  ],
+  "quiz": [
+    {{
+      "question": (string) Multiple choice question,
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "answer": (string) The correct option
+    }}
+    // Exactly 5 questions
+  ],
+  "homework": (string) Homework assignment description,
+  "teacher_tips": (string) General tips for delivering this specific lesson,
+  "common_misconceptions": (string) Things students usually get wrong and how to correct them
+}}
 
-Respond with the JSON object only. Do not wrap it in code fences.
+Respond with the JSON object only. Do not wrap it in code fences. Do not output anything else.
 """
 
     models_to_try = [
