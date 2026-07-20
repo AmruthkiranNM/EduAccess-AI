@@ -7,7 +7,7 @@ if os.path.exists(root_env):
     load_dotenv(root_env)
 
 class Config:
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     DEBUG = os.getenv("FLASK_ENV") == "development"
     # Base paths
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
