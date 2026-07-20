@@ -332,59 +332,190 @@ document.addEventListener('DOMContentLoaded', () => {
                 let notesHtml = `<div class="dashboard-grid">`;
                 if (lessonJson.teacher_notes) {
                     const tn = lessonJson.teacher_notes;
+                    
+                    const renderList = (items, fallback="No additional guidance available.") => {
+                        if (!items || items.length === 0) return `<p class="text-muted"><em>${fallback}</em></p>`;
+                        return `<ul style="padding-left:20px;">${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+                    };
+
                     notesHtml += `
                         <div class="activity-card" style="grid-column: 1 / -1;">
-                            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>Lesson Strategy & Flow</h3>
-                            <div class="lesson-section-content markdown-body" style="margin-top:1rem;">
-                                <p><strong>Strategy:</strong></p>
-                                ${(tn.teaching_strategy||[]).map(s => `<p>${s}</p>`).join('')}
-                                <p><strong>Flow:</strong></p>
-                                ${(tn.lesson_flow||[]).map(s => `<p>${s}</p>`).join('')}
-                                <p><strong>Tips:</strong></p>
-                                ${(tn.teaching_tips||[]).map(s => `<p>${s}</p>`).join('')}
-                            </div>
-                        </div>
-                        
-                        <div class="metric-card">
-                            <h4>Classroom Management & Assessment</h4>
-                            ${(tn.classroom_management||[]).map(s => `<p>${s}</p>`).join('')}
-                            <hr style="margin:1rem 0; border:none; border-top:1px solid var(--border-color)">
-                            ${(tn.assessment_tips||[]).map(s => `<p>${s}</p>`).join('')}
-                        </div>
-                        
-                        <div class="metric-card">
-                            <h4>Real World Connections</h4>
-                            ${(tn.real_world_connections||[]).map(s => `<p>${s}</p>`).join('')}
-                            <hr style="margin:1rem 0; border:none; border-top:1px solid var(--border-color)">
-                            <h4>Reflections</h4>
-                            ${(tn.reflection_questions||[]).map(s => `<p>${s}</p>`).join('')}
-                        </div>
-                        
-                        <div class="activity-card" style="grid-column: 1 / -1;">
-                            <h3>Common Misconceptions & FAQ</h3>
-                            <div class="lesson-section-content">
-                                <p><strong>Mistakes:</strong></p>
-                                <ul style="padding-left:20px;">${(tn.common_student_mistakes||[]).map(m => `<li>${m}</li>`).join('')}</ul>
-                                <p style="margin-top:1rem"><strong>Suggested Responses:</strong></p>
-                                <ul style="padding-left:20px;">${(tn.suggested_teacher_responses||[]).map(m => `<li>${m}</li>`).join('')}</ul>
-                                
-                                <details class="lesson-section" style="margin-top:1rem;">
-                                    <summary>Frequently Asked Questions</summary>
-                                    <div class="lesson-section-content">
-                                        ${(tn.frequently_asked_questions||[]).map(q => `<p><strong>Q: ${q.question}</strong><br>A: ${q.answer}</p>`).join('')}
+                            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>Comprehensive Teacher Guide</h3>
+                            
+                            <!-- Core Teaching -->
+                            <details class="lesson-section" open>
+                                <summary>Core Teaching Strategy & Flow</summary>
+                                <div class="lesson-section-content markdown-body">
+                                    <div class="info-panel" style="margin-bottom:1rem;">
+                                        <h4>Strategy</h4>
+                                        <p>${tn.lesson_strategy || 'No additional guidance available.'}</p>
                                     </div>
-                                </details>
-                            </div>
-                        </div>
-                        
-                        <div class="activity-card" style="grid-column: 1 / -1;">
-                            <h3>Differentiation & Support</h3>
-                            <div class="form-row" style="margin-top:1rem;">
-                                <div class="info-panel" style="flex:1"><h4>Needs Support</h4><ul style="padding-left:20px">${((tn.differentiated_learning||{}).support||[]).map(s => `<li>${s}</li>`).join('')}</ul></div>
-                                <div class="info-panel" style="flex:1"><h4>Advanced Extension</h4><ul style="padding-left:20px">${((tn.differentiated_learning||{}).advanced||[]).map(s => `<li>${s}</li>`).join('')}</ul></div>
-                            </div>
+                                    <h4>Teacher Script</h4>
+                                    <p><em>"${tn.teacher_introduction_script || 'Welcome class!'}"</em></p>
+                                    <h4>Detailed Flow</h4>
+                                    ${renderList(tn.detailed_lesson_flow)}
+                                    <h4>Step-by-Step Guide</h4>
+                                    ${renderList(tn.step_by_step_teaching_guide)}
+                                </div>
+                            </details>
+
+                            <!-- Concepts & Discussion -->
+                            <details class="lesson-section">
+                                <summary>Concepts & Discussion</summary>
+                                <div class="lesson-section-content">
+                                    <div class="form-row">
+                                        <div style="flex:1">
+                                            <h4>Important Concepts</h4>
+                                            ${renderList(tn.important_concepts)}
+                                        </div>
+                                        <div style="flex:1">
+                                            <h4>Key Discussion Points</h4>
+                                            ${renderList(tn.key_discussion_points)}
+                                        </div>
+                                    </div>
+                                    <h4 style="margin-top:1rem;">Examples to Explain Difficult Concepts</h4>
+                                    ${renderList(tn.examples_to_explain_difficult_concepts)}
+                                    <h4 style="margin-top:1rem;">Real World Connections</h4>
+                                    ${renderList(tn.real_world_connections)}
+                                </div>
+                            </details>
+
+                            <!-- Misconceptions & FAQ -->
+                            <details class="lesson-section">
+                                <summary>Misconceptions & FAQ</summary>
+                                <div class="lesson-section-content">
+                                    <h4>Common Misconceptions</h4>
+                                    ${!tn.common_misconceptions || tn.common_misconceptions.length === 0 ? '<p class="text-muted"><em>No additional guidance available.</em></p>' : 
+                                      `<ul style="padding-left:20px;">${tn.common_misconceptions.map(m => `<li><strong>Misconception:</strong> ${m.misconception}<br><strong>Correction:</strong> ${m.correction}</li>`).join('')}</ul>`
+                                    }
+                                    <h4 style="margin-top:1rem;">Common Mistakes & Corrections</h4>
+                                    <div class="form-row">
+                                        <div class="info-panel" style="flex:1">
+                                            <strong>Mistakes:</strong>
+                                            ${renderList(tn.common_mistakes)}
+                                        </div>
+                                        <div class="info-panel" style="flex:1">
+                                            <strong>How to Correct:</strong>
+                                            ${renderList(tn.how_to_correct_student_misunderstandings)}
+                                        </div>
+                                    </div>
+                                    <h4 style="margin-top:1rem;">Frequently Asked Questions</h4>
+                                    ${!tn.frequently_asked_questions || tn.frequently_asked_questions.length === 0 ? '<p class="text-muted"><em>No additional guidance available.</em></p>' :
+                                      tn.frequently_asked_questions.map(q => `<p><strong>Q: ${q.question}</strong><br>A: ${q.answer}</p>`).join('')
+                                    }
+                                    <h4 style="margin-top:1rem;">Suggested Teacher Answers</h4>
+                                    ${renderList(tn.suggested_teacher_answers)}
+                                </div>
+                            </details>
+
+                            <!-- Differentiation -->
+                            <details class="lesson-section">
+                                <summary>Differentiation & Support</summary>
+                                <div class="lesson-section-content form-row">
+                                    <div class="info-panel" style="flex:1">
+                                        <h4>Support for Slow Learners</h4>
+                                        ${renderList((tn.differentiated_learning || {}).support_for_slow_learners)}
+                                    </div>
+                                    <div class="info-panel" style="flex:1">
+                                        <h4>Extension Activities (Fast Learners)</h4>
+                                        ${renderList((tn.differentiated_learning || {}).extension_activities_for_fast_learners)}
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Management & Activities -->
+                            <details class="lesson-section">
+                                <summary>Management & Activities</summary>
+                                <div class="lesson-section-content">
+                                    <h4>Classroom Management Tips</h4>
+                                    ${renderList(tn.classroom_management_tips)}
+                                    <h4 style="margin-top:1rem;">Group Discussion Ideas</h4>
+                                    ${renderList(tn.group_discussion_ideas)}
+                                    <h4 style="margin-top:1rem;">Think-Pair-Share Activities</h4>
+                                    ${renderList(tn.think_pair_share_activities)}
+                                </div>
+                            </details>
+
+                            <!-- Assessment Strategy -->
+                            <details class="lesson-section">
+                                <summary>Assessment Strategy</summary>
+                                <div class="lesson-section-content">
+                                    <div class="info-panel" style="margin-bottom:1rem;">
+                                        <h4>Observation Checklist</h4>
+                                        ${renderList((tn.assessment_strategy || {}).observation_checklist)}
+                                    </div>
+                                    <div class="form-row">
+                                        <div style="flex:1">
+                                            <h4>Formative Assessment Ideas</h4>
+                                            ${renderList((tn.assessment_strategy || {}).formative_assessment_ideas)}
+                                        </div>
+                                        <div style="flex:1">
+                                            <h4>Summative Assessment Ideas</h4>
+                                            ${renderList((tn.assessment_strategy || {}).summative_assessment_ideas)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+                            
+                            <!-- Bloom's Taxonomy -->
+                            <details class="lesson-section">
+                                <summary>Bloom's Taxonomy Mapping</summary>
+                                <div class="lesson-section-content">
+                                    <table class="styled-table" style="width:100%;">
+                                        <tbody>
+                                            <tr><td><strong>Remember</strong></td><td>${(tn.blooms_taxonomy_mapping || {}).remember || 'No data'}</td></tr>
+                                            <tr><td><strong>Understand</strong></td><td>${(tn.blooms_taxonomy_mapping || {}).understand || 'No data'}</td></tr>
+                                            <tr><td><strong>Apply</strong></td><td>${(tn.blooms_taxonomy_mapping || {}).apply || 'No data'}</td></tr>
+                                            <tr><td><strong>Analyze</strong></td><td>${(tn.blooms_taxonomy_mapping || {}).analyze || 'No data'}</td></tr>
+                                            <tr><td><strong>Evaluate</strong></td><td>${(tn.blooms_taxonomy_mapping || {}).evaluate || 'No data'}</td></tr>
+                                            <tr><td><strong>Create</strong></td><td>${(tn.blooms_taxonomy_mapping || {}).create || 'No data'}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
+
+                            <!-- Questions & Reflection -->
+                            <details class="lesson-section">
+                                <summary>Questions & Reflection</summary>
+                                <div class="lesson-section-content">
+                                    <h4>Questioning Strategy</h4>
+                                    ${renderList(tn.questioning_strategy)}
+                                    <h4 style="margin-top:1rem;">Critical Thinking Questions</h4>
+                                    ${renderList(tn.critical_thinking_questions)}
+                                    <h4 style="margin-top:1rem;">Reflection Questions (For Students)</h4>
+                                    ${renderList(tn.reflection_questions)}
+                                    <div class="info-panel" style="margin-top:1rem;">
+                                        <h4>Teacher Reflection After Class</h4>
+                                        ${renderList(tn.teacher_reflection_after_class)}
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Connections & Resources -->
+                            <details class="lesson-section">
+                                <summary>Connections & Resources</summary>
+                                <div class="lesson-section-content form-row">
+                                    <div style="flex:1">
+                                        <h4>Homework Discussion Tips</h4>
+                                        ${renderList(tn.homework_discussion_tips)}
+                                        <h4 style="margin-top:1rem;">Parent Involvement</h4>
+                                        ${renderList(tn.parent_involvement_suggestions)}
+                                    </div>
+                                    <div style="flex:1">
+                                        <h4>Cross-Curricular Connections</h4>
+                                        ${renderList(tn.cross_curricular_connections)}
+                                        <h4 style="margin-top:1rem;">Teaching Resources</h4>
+                                        ${renderList(tn.teaching_resources)}
+                                        <h4 style="margin-top:1rem;">Digital Learning</h4>
+                                        ${renderList(tn.digital_learning_suggestions)}
+                                    </div>
+                                </div>
+                            </details>
+
                         </div>
                     `;
+                } else {
+                    notesHtml += `<div class="info-panel" style="grid-column: 1 / -1; text-align:center; padding:2rem;"><h3 style="color:var(--text-muted);">No additional teacher guidance available.</h3></div>`;
                 }
                 notesHtml += `</div>`;
                 document.getElementById('tab-notes').innerHTML = notesHtml;

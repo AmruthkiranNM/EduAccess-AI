@@ -143,17 +143,48 @@ The JSON object MUST follow this EXACT structure and keys (do not miss any keys)
     "exam": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }}
   }},
   "teacher_notes": {{
-    "teaching_strategy": [(array of strings)],
-    "teaching_tips": [(array of strings)],
-    "lesson_flow": [(array of strings)],
-    "common_student_mistakes": [(array of strings)],
-    "frequently_asked_questions": [ {{ "question": (string), "answer": (string) }} ],
-    "suggested_teacher_responses": [(array of strings)],
-    "assessment_tips": [(array of strings)],
-    "classroom_management": [(array of strings)],
-    "differentiated_learning": {{ "support": [(array of strings)], "advanced": [(array of strings)] }},
+    "lesson_strategy": (string),
+    "detailed_lesson_flow": [(array of strings)],
+    "teacher_introduction_script": (string),
+    "step_by_step_teaching_guide": [(array of strings)],
+    "important_concepts": [(array of strings)],
+    "key_discussion_points": [(array of strings)],
+    "examples_to_explain_difficult_concepts": [(array of strings)],
     "real_world_connections": [(array of strings)],
-    "reflection_questions": [(array of strings)]
+    "common_misconceptions": [ {{ "misconception": (string), "correction": (string) }} ],
+    "frequently_asked_questions": [ {{ "question": (string), "answer": (string) }} ],
+    "suggested_teacher_answers": [(array of strings)],
+    "common_mistakes": [(array of strings)],
+    "how_to_correct_student_misunderstandings": [(array of strings)],
+    "differentiated_learning": {{
+      "support_for_slow_learners": [(array of strings)],
+      "extension_activities_for_fast_learners": [(array of strings)]
+    }},
+    "classroom_management_tips": [(array of strings)],
+    "group_discussion_ideas": [(array of strings)],
+    "think_pair_share_activities": [(array of strings)],
+    "assessment_strategy": {{
+      "observation_checklist": [(array of strings)],
+      "formative_assessment_ideas": [(array of strings)],
+      "summative_assessment_ideas": [(array of strings)]
+    }},
+    "blooms_taxonomy_mapping": {{
+      "remember": (string),
+      "understand": (string),
+      "apply": (string),
+      "analyze": (string),
+      "evaluate": (string),
+      "create": (string)
+    }},
+    "questioning_strategy": [(array of strings)],
+    "critical_thinking_questions": [(array of strings)],
+    "reflection_questions": [(array of strings)],
+    "teacher_reflection_after_class": [(array of strings)],
+    "homework_discussion_tips": [(array of strings)],
+    "parent_involvement_suggestions": [(array of strings)],
+    "cross_curricular_connections": [(array of strings)],
+    "teaching_resources": [(array of strings)],
+    "digital_learning_suggestions": [(array of strings)]
   }},
   "student_resources": {{
     "quick_revision": [(array of strings)],

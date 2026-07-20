@@ -106,22 +106,71 @@ def apply_fallbacks(lesson_json, topic, grade):
                 "rubric": "Clarity and accuracy."
             }
 
-    # Teacher Notes (11 required types)
+    # Teacher Notes (30+ required types)
     if 'teacher_notes' not in lesson_json or not isinstance(lesson_json['teacher_notes'], dict):
         lesson_json['teacher_notes'] = {}
         
     tn = lesson_json['teacher_notes']
-    tn.setdefault('teaching_strategy', [f"Use inquiry-based learning for {topic}."])
-    tn.setdefault('teaching_tips', ["Encourage questions.", "Use visual aids."])
-    tn.setdefault('lesson_flow', ["Intro", "Activity", "Wrap-up"])
-    tn.setdefault('common_student_mistakes', ["Misunderstanding the core definition."])
-    tn.setdefault('frequently_asked_questions', [{"question": "Why learn this?", "answer": "It is foundational."}])
-    tn.setdefault('suggested_teacher_responses', ["Great question! Let's think about..."])
-    tn.setdefault('assessment_tips', ["Use formative assessment."])
-    tn.setdefault('classroom_management', ["Keep transitions short."])
-    tn.setdefault('differentiated_learning', {"support": ["Provide extra time"], "advanced": ["Give challenge questions"]})
+    
+    # Core Teaching
+    tn.setdefault('lesson_strategy', f"Use inquiry-based learning for {topic}.")
+    tn.setdefault('detailed_lesson_flow', ["Introduction", "Direct Instruction", "Guided Practice", "Independent Practice", "Closure"])
+    tn.setdefault('teacher_introduction_script', f"Welcome class! Today we are exploring the fascinating world of {topic}.")
+    tn.setdefault('step_by_step_teaching_guide', ["Step 1: Assess prior knowledge", "Step 2: Introduce concept", "Step 3: Group activity", "Step 4: Review"])
+    
+    # Concepts & Discussion
+    tn.setdefault('important_concepts', [f"The core mechanism of {topic}."])
+    tn.setdefault('key_discussion_points', [f"How does {topic} affect our daily lives?"])
+    tn.setdefault('examples_to_explain_difficult_concepts', [f"Think of {topic} like a factory assembly line."])
     tn.setdefault('real_world_connections', [f"{topic} applies to daily problem solving."])
+    
+    # Misconceptions & FAQ
+    tn.setdefault('common_misconceptions', [{"misconception": f"Students think {topic} is simple.", "correction": "It involves complex steps."}])
+    tn.setdefault('frequently_asked_questions', [{"question": f"Why learn {topic}?", "answer": "It is foundational for future learning."}])
+    tn.setdefault('suggested_teacher_answers', ["Great question! Let's explore that..."])
+    tn.setdefault('common_mistakes', ["Confusing the main terms."])
+    tn.setdefault('how_to_correct_student_misunderstandings', ["Use visual aids and real-world analogies."])
+    
+    # Differentiation
+    if 'differentiated_learning' not in tn or not isinstance(tn['differentiated_learning'], dict):
+        tn['differentiated_learning'] = {}
+    tn['differentiated_learning'].setdefault('support_for_slow_learners', ["Provide visual aids", "Repeat key terms", "Use simple language"])
+    tn['differentiated_learning'].setdefault('extension_activities_for_fast_learners', ["Research related advanced topics", "Peer mentoring"])
+    
+    # Management & Activities
+    tn.setdefault('classroom_management_tips', ["Keep transitions short.", "Use a quiet signal."])
+    tn.setdefault('group_discussion_ideas', ["Divide into pairs to discuss the main concept."])
+    tn.setdefault('think_pair_share_activities', ["Think about the question, pair with a neighbor, and share with the class."])
+    
+    # Assessment
+    if 'assessment_strategy' not in tn or not isinstance(tn['assessment_strategy'], dict):
+        tn['assessment_strategy'] = {}
+    tn['assessment_strategy'].setdefault('observation_checklist', ["Is the student engaged?", "Can they define the concept?"])
+    tn['assessment_strategy'].setdefault('formative_assessment_ideas', ["Exit tickets", "Thumbs up/down"])
+    tn['assessment_strategy'].setdefault('summative_assessment_ideas', ["End of unit quiz", "Short essay"])
+    
+    # Bloom's Taxonomy
+    if 'blooms_taxonomy_mapping' not in tn or not isinstance(tn['blooms_taxonomy_mapping'], dict):
+        tn['blooms_taxonomy_mapping'] = {}
+    tn['blooms_taxonomy_mapping'].setdefault('remember', f"Define {topic}.")
+    tn['blooms_taxonomy_mapping'].setdefault('understand', f"Explain the process of {topic}.")
+    tn['blooms_taxonomy_mapping'].setdefault('apply', f"Apply {topic} to a real-world scenario.")
+    tn['blooms_taxonomy_mapping'].setdefault('analyze', f"Compare {topic} with other concepts.")
+    tn['blooms_taxonomy_mapping'].setdefault('evaluate', f"Assess the importance of {topic}.")
+    tn['blooms_taxonomy_mapping'].setdefault('create', f"Design a model demonstrating {topic}.")
+    
+    # Questions & Reflection
+    tn.setdefault('questioning_strategy', ["Use open-ended questions.", "Wait 3 seconds for answers."])
+    tn.setdefault('critical_thinking_questions', [f"What would happen if {topic} did not exist?"])
     tn.setdefault('reflection_questions', ["Did the students grasp the main concept?"])
+    tn.setdefault('teacher_reflection_after_class', ["What worked well?", "What should be changed for next time?"])
+    
+    # Connections & Resources
+    tn.setdefault('homework_discussion_tips', ["Review the hardest homework question first."])
+    tn.setdefault('parent_involvement_suggestions', ["Send home a discussion prompt for parents."])
+    tn.setdefault('cross_curricular_connections', ["Connect this topic to math or history."])
+    tn.setdefault('teaching_resources', ["Online encyclopedias", "Library books"])
+    tn.setdefault('digital_learning_suggestions', ["Use an interactive simulation applet."])
 
     # Student Resources (11 required types)
     if 'student_resources' not in lesson_json or not isinstance(lesson_json['student_resources'], dict):
