@@ -31,7 +31,7 @@ def generate_lesson_content(topic: str, grade: str, language: str, subject: str 
         logger.error(f"Failed to initialize Groq client: {e}")
         raise Exception("Failed to initialize AI client. Check configuration.")
     
-    prompt = f"""You are an expert master teacher and curriculum designer. Create a highly detailed, professional lesson plan for the following:
+    prompt = f"""You are an expert master teacher, instructional designer, and curriculum developer. Create a highly detailed, professional, classroom-ready lesson plan for the following:
 Topic: {topic}
 Subject: {subject}
 Grade Level: {grade}
@@ -42,61 +42,133 @@ Difficulty: {difficulty}
 
 You MUST respond entirely in {language}.
 You MUST adapt the depth and number of activities strictly to the {duration}-minute time constraint.
-You MUST respond with ONLY a valid JSON object — no markdown, no extra text, no code fences.
+You MUST respond with ONLY a valid JSON object — no markdown outside of string values, no extra text, no code fences wrapping the JSON.
 
-The JSON object MUST follow this EXACT structure and keys:
+The JSON object MUST follow this EXACT structure and keys (do not miss any keys):
 {{
-  "metadata": {{
-    "duration": "{duration} minutes",
+  "overview": {{
+    "lesson_objective": (string),
+    "learning_outcome": (string),
+    "required_materials": [(array of strings)],
+    "estimated_teaching_time": "{duration} minutes",
     "difficulty": "{difficulty}",
-    "grade": "{grade}",
-    "language": "{language}",
-    "activities_count": (integer) total number of activities,
-    "reading_time": (string) estimated reading time for the teacher,
-    "topic": "{topic}",
-    "subject": "{subject}"
+    "teaching_style": "{teaching_style}",
+    "skills_developed": [(array of strings)],
+    "curriculum_alignment": (string),
+    "blooms_taxonomy": (string),
+    "21st_century_skills": [(array of strings)],
+    "key_vocabulary": [(array of strings)],
+    "student_prerequisites": [(array of strings)],
+    "teacher_prep_checklist": [(array of strings)],
+    "classroom_prep": (string),
+    "student_prep": (string)
   }},
-  "learning_outcomes": [
-    "Explain...", "Identify...", "Solve..." (3-5 bullet points)
+  "lesson_plan": [
+    {{
+      "subtopic_title": (string),
+      "estimated_time": (string),
+      "simple_explanation": (string),
+      "detailed_explanation": (string),
+      "real_life_example": (string),
+      "fun_fact": (string),
+      "teacher_tip": (string),
+      "common_mistake": (string),
+      "important_keywords": [(array of strings)],
+      "student_question": (string),
+      "suggested_answer": (string),
+      "mini_recap": (string),
+      "quick_check_question": (string)
+    }}
+  ],
+  "visualizations": [
+    {{
+      "title": (string) Description of visualization,
+      "type": (string) "process" | "hierarchy" | "timeline" | "comparison" | "cycle",
+      "description": (string) "Short explanation of the diagram.",
+      "data": (object | array) "Pure semantic JSON data for the diagram. Examples: For 'process' -> ['Step 1', 'Step 2', ...]. For 'hierarchy' -> {{ 'name': 'Root', 'children': [{{ 'name': 'Child' }}] }}. For 'timeline' -> [{{ 'year': '...', 'event': '...' }}]. For 'comparison' -> {{ 'headers': ['A', 'B'], 'rows': [['A1', 'B1']] }}. For 'cycle' -> ['Phase 1', 'Phase 2', 'Phase 3']"
+    }}
   ],
   "timeline": [
     {{
-      "time": "0-5 min",
-      "title": "Introduction",
-      "description": "Brief description of what happens."
+      "time_range": (string) e.g., '0-10 minutes',
+      "title": (string),
+      "teacher_script": (string),
+      "expected_student_activity": (string)
     }}
-    // Add items to fill exactly {duration} minutes.
+    // IMPORTANT: Generate 4 to 8 of these objects to cover the entire lesson duration.
   ],
-  "topic_map": (string) "A text-based tree representing the hierarchy of concepts. Use ├── and └──.",
-  "sections": [
+  "activities": [
     {{
-      "title": (string) Section Title (e.g. 'Introduction', 'Main Concept 1', 'Activity'),
-      "estimated_time": (string) e.g. "10 min",
-      "teacher_notes": (string) Tips for the teacher,
-      "content": (string) The actual detailed content, explanation, or examples. Use markdown formatting inside the string (e.g. **bold**, bullet points).
-    }}
-    // Add as many sections as needed based on duration.
-  ],
-  "student_engagement": [
-    {{
-      "type": (string) e.g. "Think-Pair-Share", "Discussion Question", "Class Poll", "Group Activity",
-      "prompt": (string) The question or activity prompt
+      "activity_name": (string),
+      "objective": (string),
+      "materials": [(array of strings)],
+      "preparation_time": (string),
+      "execution_time": (string),
+      "instructions": [(array of strings)],
+      "teacher_script": (string),
+      "student_instructions": (string),
+      "learning_outcome": (string),
+      "assessment": (string),
+      "difficulty": (string),
+      "group_size": (string),
+      "variations": (string)
     }}
   ],
   "quiz": [
     {{
-      "question": (string) Multiple choice question,
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "answer": (string) The correct option
+      "question_type": (string) 'Multiple Choice' | 'True or False' | 'Fill in the Blank' | 'Match the Following' | 'Short Answer' | 'Long Answer' | 'HOTS' | 'Case Study',
+      "question": (string),
+      "options": [(array of strings) Required for MCQ and Match. Leave empty for others],
+      "correct_answer": (string),
+      "explanation": (string),
+      "difficulty": (string),
+      "topic_covered": (string),
+      "learning_objective": (string),
+      "marks": (number)
     }}
-    // Exactly 5 questions
   ],
-  "homework": (string) Homework assignment description,
-  "teacher_tips": (string) General tips for delivering this specific lesson,
-  "common_misconceptions": (string) Things students usually get wrong and how to correct them
+  "homework": {{
+    "easy": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "medium": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "advanced": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "creative": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "project": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "research": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "parent_activity": {{ "task": (string), "time": (string), "outcome": (string) }},
+    "revision_questions": [(array of strings)],
+    "exam_questions": [(array of strings)]
+  }},
+  "teacher_notes": {{
+    "teaching_strategy": (string),
+    "teaching_sequence": (string),
+    "important_concepts": (string),
+    "common_misconceptions": (string),
+    "frequently_asked_questions": [ {{ "question": (string), "answer": (string) }} ],
+    "classroom_management": (string),
+    "assessment_strategy": (string),
+    "differentiated_learning": (string),
+    "support_slow_learners": (string),
+    "extension_advanced": (string),
+    "cross_curricular": (string),
+    "real_world": (string),
+    "exam_tips": (string),
+    "revision_tips": (string)
+  }},
+  "student_resources": {{
+    "key_points": [(array of strings)],
+    "quick_revision_sheet": (string),
+    "glossary": [ {{ "term": (string), "definition": (string) }} ],
+    "vocabulary": [(array of strings)],
+    "formula_sheet": [(array of strings) if applicable],
+    "important_dates": [(array of strings) if applicable],
+    "mnemonics": [(array of strings)],
+    "memory_tricks": [(array of strings)],
+    "common_mistakes": [(array of strings)],
+    "exam_prep_guide": (string)
+  }}
 }}
 
-Respond with the JSON object only. Do not wrap it in code fences. Do not output anything else.
+Ensure every field is populated with high-quality, professional educational content. Generate exactly 10 multiple choice, 5 true/false, 5 fill-in-blanks, 5 match, 5 short answer, 2 long answer, 3 HOTS, and 2 case study questions for the quiz array (Total 37 questions). Generate at least 5 activities. Respond ONLY with the JSON object.
 """
 
     models_to_try = [
@@ -116,8 +188,8 @@ Respond with the JSON object only. Do not wrap it in code fences. Do not output 
                 ],
                 model=model_name,
                 temperature=0.7,
-                # Optionally specify response format if supported by the model,
-                # but relying on prompt engineering for safety across fallbacks.
+                max_tokens=7500,
+                response_format={"type": "json_object"}
             )
             raw_text = response.choices[0].message.content
             logger.info("Successfully received response from Groq API.")
