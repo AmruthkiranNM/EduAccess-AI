@@ -193,9 +193,12 @@
         </footer>
     </main>
 
-    <!-- Apache ECharts for Visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <!-- Lightbox Modal -->
+    <div id="lightboxModal" class="lightbox-modal">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightboxImg" class="lightbox-content" src="">
+    </div>
     <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=1.1" defer></script>
 </body>
 </html>

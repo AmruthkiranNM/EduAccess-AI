@@ -193,56 +193,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 timelineHtml += `</div>`;
                 document.getElementById('tab-timeline').innerHTML = timelineHtml;
 
-                // 4. Render Visualizations (Intelligent ECharts)
-                let mapHtml = ``;
+                // 4. Render Visualizations (Wikipedia Image Gallery)
+                let mapHtml = `<div class="gallery-grid">`;
+                let hasViz = false;
                 if(lessonJson.visualizations && lessonJson.visualizations.length > 0) {
+                    hasViz = true;
                     lessonJson.visualizations.forEach((vis, idx) => {
-                        const isTable = vis.type === 'comparison';
-                        
-                        let contentHtml = '';
-                        if (isTable) {
-                            // Render Markdown Table
-                            try {
-                                let tableMd = `| ${vis.data.headers.join(' | ')} |\n| ${vis.data.headers.map(()=>'---').join(' | ')} |\n`;
-                                vis.data.rows.forEach(row => {
-                                    tableMd += `| ${row.join(' | ')} |\n`;
-                                });
-                                contentHtml = marked.parse(tableMd);
-                            } catch(e) {
-                                contentHtml = "<p>Data format error for comparison.</p>";
-                            }
-                        }
-                        
                         mapHtml += `
-                            <div class="activity-card viz-card">
-                                <h3>${vis.title} <span class="badge">${vis.type}</span></h3>
-                                <p style="color:var(--text-muted); margin-bottom: 10px;">${vis.description || ''}</p>
+                            <div class="gallery-card">
+                                <h3>${vis.title}</h3>
                                 <div class="viz-toolbar">
-                                    <button class="viz-btn" onclick="toggleFullscreen('viz-${idx}')">🔍 Fullscreen</button>
+                                    <button class="viz-btn" onclick="downloadImage(document.getElementById('viz-img-${idx}').src, '${vis.title.replace(/'/g, "\\'")}')">📥 Download</button>
                                 </div>
-                                <div id="viz-${idx}" class="${isTable ? 'markdown-body' : 'echarts-container'}" style="${isTable ? 'text-align: center; margin-top: 20px;' : ''}">
-                                    ${isTable ? contentHtml : ''}
+                                <div class="gallery-img-container">
+                                    <img id="viz-img-${idx}" src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" alt="${vis.title}">
                                 </div>
+                                <div id="viz-attr-${idx}" class="gallery-attribution">Searching Wikimedia Commons...</div>
+                                
+                                <details class="lesson-section" style="margin-top:auto;">
+                                    <summary>Teacher Details</summary>
+                                    <div class="lesson-section-content">
+                                        <p><strong>What it shows:</strong> ${vis.what_it_shows}</p>
+                                        <p><strong>Labels:</strong> ${vis.important_labels}</p>
+                                        <p><strong>Explanation:</strong> ${vis.teacher_explanation}</p>
+                                        <p><strong>Observations:</strong> ${vis.key_observations}</p>
+                                        <p><strong>Discussion:</strong> ${vis.discussion_questions}</p>
+                                    </div>
+                                </details>
                             </div>
                         `;
                     });
-                } else {
-                    mapHtml = `<p>This topic does not require a visualization.</p>`;
+                }
+                mapHtml += `</div>`;
+                if (!hasViz) {
+                    mapHtml = `<p>No educational diagram available for this topic.</p>`;
                 }
                 document.getElementById('tab-map').innerHTML = mapHtml;
                 
-                // Initialize ECharts for non-table visuals after they are injected into the DOM
+                // Fetch images from Wikimedia after DOM injection
                 setTimeout(() => { 
                     if(lessonJson.visualizations) {
                         lessonJson.visualizations.forEach((vis, idx) => {
-                            if (vis.type !== 'comparison') {
-                                try {
-                                    window.renderECharts(`viz-${idx}`, vis.type, vis.data);
-                                } catch(e) {
-                                    console.error("Error rendering ECharts:", e);
-                                    document.getElementById(`viz-${idx}`).innerHTML = `<p>Error rendering visualization.</p>`;
-                                }
-                            }
+                            window.fetchWikimediaImage(vis.wikimedia_search_query, `viz-img-${idx}`, `viz-attr-${idx}`);
                         });
                     }
                 }, 300);
@@ -429,89 +421,88 @@ window.copyViz = function(elementId) {
     });
 };
 
-
-window.renderECharts = function(elementId, type, data) {
-    const elem = document.getElementById(elementId);
-    if (!elem) return;
-    
-    // Clear previous if any
-    elem.innerHTML = "";
-    
-    // Initialize ECharts instance
-    const chart = echarts.init(elem);
-    
-    let option = {
-        toolbox: {
-            show: true,
-            feature: {
-                dataZoom: { yAxisIndex: "none" },
-                dataView: { readOnly: false },
-                restore: {},
-                saveAsImage: {}
-            }
-        },
-        tooltip: { trigger: "item", triggerOn: "mousemove" }
-    };
-
-    if (type === "process") {
-        // Data should be an array of steps
-        const nodes = data.map((step, i) => ({ name: step, x: i * 150, y: 100 }));
-        const links = data.map((step, i) => (i < data.length - 1 ? { source: step, target: data[i+1] } : null)).filter(l => l);
-        option.series = [{
-            type: "graph",
-            layout: "none",
-            symbolSize: 60,
-            roam: true,
-            label: { show: true, position: "bottom" },
-            edgeSymbol: ["none", "arrow"],
-            edgeSymbolSize: [4, 10],
-            data: nodes,
-            links: links,
-            lineStyle: { color: "source", curveness: 0.2 }
-        }];
-    } 
-    else if (type === "hierarchy") {
-        // Data should be { name: "...", children: [...] }
-        option.series = [{
-            type: "tree",
-            data: [data],
-            top: "5%", left: "7%", bottom: "5%", right: "20%",
-            symbolSize: 10,
-            label: { position: "left", verticalAlign: "middle", align: "right" },
-            leaves: { label: { position: "right", verticalAlign: "middle", align: "left" } },
-            expandAndCollapse: true,
-            animationDuration: 550,
-            animationDurationUpdate: 750
-        }];
+window.openLightbox = function(imgSrc) {
+    const modal = document.getElementById('lightboxModal');
+    const modalImg = document.getElementById('lightboxImg');
+    if (modal && modalImg) {
+        modalImg.src = imgSrc;
+        modal.classList.add('show');
     }
-    else if (type === "cycle") {
-        // Data should be array of phases
-        const pieData = data.map(d => ({ value: 10, name: d }));
-        option.series = [{
-            type: "pie",
-            radius: ["40%", "70%"],
-            avoidLabelOverlap: false,
-            itemStyle: { borderRadius: 10, borderColor: "#fff", borderWidth: 2 },
-            label: { show: true, position: "outside" },
-            data: pieData
-        }];
-    }
-    else if (type === "timeline") {
-        // Data array of { year, event }
-        const axisData = data.map(d => d.year || "");
-        const seriesData = data.map(d => d.event || d);
-        option.xAxis = { type: "category", data: axisData };
-        option.yAxis = { type: "value", show: false };
-        option.series = [{
-            data: seriesData.map(s => 1),
-            type: "line",
-            label: { show: true, formatter: (p) => seriesData[p.dataIndex], position: "top" }
-        }];
-    }
-
-    chart.setOption(option);
-    
-    // Make responsive
-    window.addEventListener("resize", () => chart.resize());
 };
 
+window.closeLightbox = function() {
+    const modal = document.getElementById('lightboxModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+};
+
+window.downloadImage = function(imgSrc, title) {
+    // Attempt to download by fetching blob to avoid CORS if possible, or just open in new tab
+    fetch(imgSrc)
+        .then(res => res.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = title.replace(/\s+/g, '_') + '.jpg';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(() => {
+            // Fallback: open in new tab
+            window.open(imgSrc, '_blank');
+        });
+};
+
+window.fetchWikimediaImage = async function(query, imgElementId, attrElementId) {
+    const imgElem = document.getElementById(imgElementId);
+    const attrElem = document.getElementById(attrElementId);
+    if (!imgElem || !attrElem) return;
+    
+    imgElem.style.opacity = '0.5';
+    
+    // Wikipedia API url to search for images in File namespace (6)
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&prop=imageinfo&iiprop=url|extmetadata&format=json&origin=*`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data && data.query && data.query.pages) {
+            const pages = data.query.pages;
+            const firstPageId = Object.keys(pages)[0];
+            const page = pages[firstPageId];
+            
+            if (page.imageinfo && page.imageinfo.length > 0) {
+                const info = page.imageinfo[0];
+                let artist = "Wikimedia Commons";
+                if (info.extmetadata && info.extmetadata.Artist) {
+                    // Artist might contain HTML, strip it roughly
+                    artist = info.extmetadata.Artist.value.replace(/<[^>]*>?/gm, '');
+                }
+                
+                imgElem.src = info.url;
+                imgElem.style.opacity = '1';
+                imgElem.setAttribute('data-full-src', info.url);
+                attrElem.innerHTML = `Source: <i>${artist}</i>`;
+                
+                // Attach click to open lightbox
+                imgElem.onclick = () => window.openLightbox(info.url);
+                
+                return info.url; // success
+            }
+        }
+        
+        // Fallback
+        throw new Error("No image found");
+    } catch (e) {
+        imgElem.style.opacity = '1';
+        imgElem.src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // standard no image
+        attrElem.innerText = "No image found for this topic.";
+        console.error("Wikimedia fetch error: ", e);
+        return null;
+    }
+};

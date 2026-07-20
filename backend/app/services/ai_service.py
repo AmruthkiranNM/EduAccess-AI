@@ -81,11 +81,15 @@ The JSON object MUST follow this EXACT structure and keys (do not miss any keys)
     }}
   ],
   "visualizations": [
+    // Provide 3 to 6 relevant visual resources
     {{
-      "title": (string) Description of visualization,
-      "type": (string) "process" | "hierarchy" | "timeline" | "comparison" | "cycle",
-      "description": (string) "Short explanation of the diagram.",
-      "data": (object | array) "Pure semantic JSON data for the diagram. Examples: For 'process' -> ['Step 1', 'Step 2', ...]. For 'hierarchy' -> {{ 'name': 'Root', 'children': [{{ 'name': 'Child' }}] }}. For 'timeline' -> [{{ 'year': '...', 'event': '...' }}]. For 'comparison' -> {{ 'headers': ['A', 'B'], 'rows': [['A1', 'B1']] }}. For 'cycle' -> ['Phase 1', 'Phase 2', 'Phase 3']"
+      "title": (string) "Title of the educational image or diagram",
+      "wikimedia_search_query": (string) "Highly specific search query for Wikimedia Commons (e.g. 'human heart diagram SVG' or 'photosynthesis labeled english')",
+      "what_it_shows": (string) "Description of the image content",
+      "important_labels": (string) "Key labels to point out to students",
+      "teacher_explanation": (string) "How the teacher should explain this diagram",
+      "key_observations": (string) "What students should notice",
+      "discussion_questions": (string) "Questions to engage the class about this image"
     }}
   ],
   "timeline": [
