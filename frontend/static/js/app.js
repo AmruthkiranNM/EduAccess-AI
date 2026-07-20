@@ -271,10 +271,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="quiz-card">
                                 <h4>${index + 1}. ${q.question} <span class="badge" style="background:var(--text-muted)">${q.question_type}</span> <span class="badge" style="background:var(--primary-color)">${q.difficulty}</span></h4>
                                 ${q.options && q.options.length ? `<ul class="options">${q.options.map(opt => `<li>${opt}</li>`).join('')}</ul>` : ''}
-                                <div class="explanation">
-                                    <strong>Correct Answer:</strong> ${q.correct_answer}<br><br>
-                                    ${q.explanation}
-                                </div>
+                                <details class="lesson-section" style="margin-top:15px;">
+                                    <summary>View Correct Answer & Explanation</summary>
+                                    <div class="lesson-section-content explanation" style="margin-top:0;">
+                                        <strong>Correct Answer:</strong> ${q.correct_answer}<br><br>
+                                        ${q.explanation}
+                                    </div>
+                                </details>
                             </div>
                         `;
                     });
@@ -282,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('tab-quiz').innerHTML = quizHtml;
 
                 // 7. Render Homework
-                let hwHtml = `<div class="dashboard-grid">`;
+                let hwHtml = `<div class="homework-grid">`;
                 if (lessonJson.homework) {
                     const renderHwCard = (hwObj, icon, typeName) => {
                         if(!hwObj || !hwObj.title) return '';
@@ -521,11 +524,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('tab-notes').innerHTML = notesHtml;
 
                 // 9. Render Student Resources
-                let resHtml = `<div class="dashboard-grid">`;
+                let resHtml = `<div class="resources-grid dashboard-grid">`;
                 if (lessonJson.student_resources) {
                     const sr = lessonJson.student_resources;
                     resHtml += `
-                        <div class="activity-card" style="grid-column: 1 / -1;">
+                        <div class="activity-card">
                             <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Key Concepts & Quick Revision</h3>
                             <div class="lesson-section-content markdown-body" style="margin-top:1rem;">
                                 <p><strong>Revision:</strong></p>
@@ -535,29 +538,29 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         
-                        <div class="activity-card" style="grid-column: 1 / -1;">
+                        <div class="activity-card">
                             <h3>Definitions & Glossary</h3>
                             <p><strong>Vocabulary:</strong> ${(sr.vocabulary||[]).join(', ')}</p>
-                            <div class="form-row" style="margin-top:1rem;">
-                                <div style="flex:1">
+                            <div style="margin-top:1rem; display:flex; flex-direction:column; gap:1rem;">
+                                <div>
                                     <h4>Definitions</h4>
                                     ${(sr.definitions||[]).map(d => `<p><strong>${d.term}:</strong> ${d.definition}</p>`).join('')}
                                 </div>
-                                <div style="flex:1">
+                                <div>
                                     <h4>Glossary</h4>
                                     ${(sr.glossary||[]).map(d => `<p><strong>${d.term}:</strong> ${d.definition}</p>`).join('')}
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="metric-card" style="grid-column: 1 / -1;">
+                        <div class="metric-card">
                             <h3>Exam Prep & Practice</h3>
-                            <div class="form-row" style="margin-top:1rem;">
-                                <div style="flex:1">
+                            <div style="margin-top:1rem; display:flex; flex-direction:column; gap:1rem; text-align:left;">
+                                <div>
                                     <h4>Exam Tips</h4>
                                     <ul style="padding-left:20px">${(sr.exam_tips||[]).map(k => `<li>${k}</li>`).join('')}</ul>
                                 </div>
-                                <div style="flex:1">
+                                <div>
                                     <h4>Practice Questions</h4>
                                     <ul style="padding-left:20px">${(sr.practice_questions||[]).map(k => `<li>${k}</li>`).join('')}</ul>
                                 </div>
@@ -577,18 +580,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>` : ''}
                         
-                        <div class="activity-card" style="grid-column: 1 / -1;">
-                            <h3>Further Exploration & Tricks</h3>
-                            <div class="form-row" style="margin-top:1rem;">
-                                <div style="flex:1">
+                        <div class="activity-card">
+                            <h3>Further Exploration</h3>
+                            <div style="margin-top:1rem; display:flex; flex-direction:column; gap:1rem;">
+                                <div>
                                     <h4>Memory Tricks</h4>
                                     <ul style="padding-left:20px">${(sr.memory_tricks||[]).map(k => `<li>${k}</li>`).join('')}</ul>
                                 </div>
-                                <div style="flex:1">
+                                <div>
                                     <h4>Interesting Facts</h4>
                                     <ul style="padding-left:20px">${(sr.interesting_facts||[]).map(k => `<li>${k}</li>`).join('')}</ul>
                                 </div>
-                                <div style="flex:1">
+                                <div>
                                     <h4>Additional Reading</h4>
                                     <ul style="padding-left:20px">${(sr.additional_reading||[]).map(k => `<li>${k}</li>`).join('')}</ul>
                                 </div>
