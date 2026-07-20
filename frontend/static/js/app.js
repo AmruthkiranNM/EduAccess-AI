@@ -193,31 +193,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 timelineHtml += `</div>`;
                 document.getElementById('tab-timeline').innerHTML = timelineHtml;
 
-                // 4. Render Visualizations (Wikipedia Image Gallery)
+                // 4. Render Visualizations (Backend Image Gallery)
                 let mapHtml = `<div class="gallery-grid">`;
                 let hasViz = false;
                 if(lessonJson.visualizations && lessonJson.visualizations.length > 0) {
                     hasViz = true;
                     lessonJson.visualizations.forEach((vis, idx) => {
                         mapHtml += `
-                            <div class="gallery-card">
-                                <h3>${vis.title}</h3>
+                            <div class="gallery-card viz-card">
+                                <h3>${vis.title || 'Educational Diagram'}</h3>
                                 <div class="viz-toolbar">
-                                    <button class="viz-btn" onclick="downloadImage(document.getElementById('viz-img-${idx}').src, '${vis.title.replace(/'/g, "\\'")}')">📥 Download</button>
+                                    <button class="viz-btn" onclick="window.openLightbox(document.getElementById('viz-img-${idx}').src)" title="Zoom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg></button>
+                                    <button class="viz-btn" onclick="window.toggleFullscreen('viz-container-${idx}')" title="Fullscreen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg></button>
+                                    <button class="viz-btn" onclick="window.downloadImage(document.getElementById('viz-img-${idx}').src, '${(vis.title||'image').replace(/'/g, "\\'")}')" title="Download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
                                 </div>
-                                <div class="gallery-img-container">
-                                    <img id="viz-img-${idx}" src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" alt="${vis.title}">
+                                <div class="gallery-img-container" id="viz-container-${idx}">
+                                    <img id="viz-img-${idx}" src="${vis.url}" alt="${vis.title}">
                                 </div>
-                                <div id="viz-attr-${idx}" class="gallery-attribution">Searching Wikimedia Commons...</div>
+                                <p class="viz-caption" style="font-size:0.9em; font-style:italic; color:var(--text-muted); margin:10px 0;">${vis.caption || ''}</p>
                                 
                                 <details class="lesson-section" style="margin-top:auto;">
-                                    <summary>Teacher Details</summary>
+                                    <summary>Teacher Details & Explanation</summary>
                                     <div class="lesson-section-content">
-                                        <p><strong>What it shows:</strong> ${vis.what_it_shows}</p>
-                                        <p><strong>Labels:</strong> ${vis.important_labels}</p>
-                                        <p><strong>Explanation:</strong> ${vis.teacher_explanation}</p>
-                                        <p><strong>Observations:</strong> ${vis.key_observations}</p>
-                                        <p><strong>Discussion:</strong> ${vis.discussion_questions}</p>
+                                        <p><strong>What it shows:</strong> ${vis.what_it_shows || ''}</p>
+                                        <p><strong>Explanation:</strong> ${vis.short_explanation || vis.teacher_explanation || ''}</p>
+                                        <p><strong>Important Labels:</strong> ${vis.important_labels || ''}</p>
+                                        <p><strong>Observations:</strong> ${vis.key_observations || ''}</p>
+                                        <p><strong>Discussion:</strong> ${vis.discussion_questions || ''}</p>
                                     </div>
                                 </details>
                             </div>
@@ -226,18 +228,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 mapHtml += `</div>`;
                 if (!hasViz) {
-                    mapHtml = `<p>No educational diagram available for this topic.</p>`;
+                    mapHtml = `
+                        <div class="info-panel" style="text-align:center; padding:3rem;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <h3 style="color:var(--text-muted); margin-top:1rem;">Educational Diagram Not Available</h3>
+                            <p style="color:var(--text-muted);">No highly relevant image was found for this specific topic.</p>
+                        </div>`;
                 }
                 document.getElementById('tab-map').innerHTML = mapHtml;
-                
-                // Fetch images from Wikimedia after DOM injection
-                setTimeout(() => { 
-                    if(lessonJson.visualizations) {
-                        lessonJson.visualizations.forEach((vis, idx) => {
-                            window.fetchWikimediaImage(vis.wikimedia_search_query, `viz-img-${idx}`, `viz-attr-${idx}`);
-                        });
-                    }
-                }, 300);
+
 
                 // 5. Render Activities
                 let activitiesHtml = ``;
@@ -285,57 +284,188 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 7. Render Homework
                 let hwHtml = `<div class="dashboard-grid">`;
                 if (lessonJson.homework) {
-                    const hw = lessonJson.homework;
-                    if(hw.easy) hwHtml += `<div class="activity-card"><h4>Easy (⭐)</h4><p>${hw.easy.task}</p><small>${hw.easy.time}</small></div>`;
-                    if(hw.medium) hwHtml += `<div class="activity-card"><h4>Medium (⭐⭐)</h4><p>${hw.medium.task}</p><small>${hw.medium.time}</small></div>`;
-                    if(hw.advanced) hwHtml += `<div class="activity-card"><h4>Advanced (⭐⭐⭐)</h4><p>${hw.advanced.task}</p><small>${hw.advanced.time}</small></div>`;
-                    if(hw.creative) hwHtml += `<div class="activity-card" style="grid-column: 1 / -1;"><h4>Creative Project 🎨</h4><p>${hw.creative.task}</p></div>`;
-                    if(hw.project) hwHtml += `<div class="activity-card" style="grid-column: 1 / -1;"><h4>Project Work 🏗️</h4><p>${hw.project.task}</p></div>`;
+                    const renderHwCard = (hwObj, icon, typeName) => {
+                        if(!hwObj || !hwObj.title) return '';
+                        const diffBadgeClass = (hwObj.difficulty_badge||'').toLowerCase() === 'hard' ? 'bg-danger' : ((hwObj.difficulty_badge||'').toLowerCase() === 'medium' ? 'bg-warning' : 'bg-success');
+                        return `
+                            <div class="activity-card hw-card">
+                                <div class="hw-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+                                    <h4 style="margin:0;">${icon} ${typeName}</h4>
+                                    <div>
+                                        <span class="badge ${diffBadgeClass}" style="margin-right:5px;">${hwObj.difficulty_badge || 'Adaptive'}</span>
+                                        <span class="badge" style="background:var(--bg-card); color:var(--text-color); border:1px solid var(--border-color)">⏱ ${hwObj.estimated_time || '15 mins'}</span>
+                                    </div>
+                                </div>
+                                <h3 style="margin-bottom:0.5rem;">${hwObj.title}</h3>
+                                <p><strong>Objective:</strong> ${hwObj.objective || ''}</p>
+                                <p><strong>Outcome:</strong> ${hwObj.learning_outcome || ''}</p>
+                                <details class="lesson-section" style="margin-top:1rem;">
+                                    <summary>Instructions & Rubric</summary>
+                                    <div class="lesson-section-content">
+                                        <p><strong>Instructions:</strong></p>
+                                        <ol style="padding-left:20px;">${(hwObj.instructions||[]).map(i => `<li>${i}</li>`).join('')}</ol>
+                                        <p><strong>Format:</strong> ${hwObj.submission_format || ''}</p>
+                                        <p><strong>Materials:</strong> ${(hwObj.required_materials||[]).join(', ')}</p>
+                                        <div class="info-panel" style="margin-top:1rem;">
+                                            <strong>Evaluation Rubric:</strong><br>${hwObj.teacher_evaluation_rubric || ''}
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                        `;
+                    };
+                    
+                    const hw = lessonJson.homework || {};
+                    if(hw.easy) hwHtml += renderHwCard(hw.easy, '🟢', 'Easy Homework');
+                    if(hw.medium) hwHtml += renderHwCard(hw.medium, '🟡', 'Medium Homework');
+                    if(hw.advanced) hwHtml += renderHwCard(hw.advanced, '🔴', 'Advanced Homework');
+                    if(hw.creative) hwHtml += renderHwCard(hw.creative, '🎨', 'Creative Homework');
+                    if(hw.project) hwHtml += renderHwCard(hw.project, '🏗️', 'Project Work');
+                    if(hw.research) hwHtml += renderHwCard(hw.research, '🔍', 'Research Activity');
+                    if(hw.revision) hwHtml += renderHwCard(hw.revision, '📄', 'Revision Questions');
+                    if(hw.exam) hwHtml += renderHwCard(hw.exam, '📝', 'Exam Questions');
                 }
                 hwHtml += `</div>`;
                 document.getElementById('tab-homework').innerHTML = hwHtml;
 
                 // 8. Render Teacher Notes
-                let notesHtml = ``;
+                let notesHtml = `<div class="dashboard-grid">`;
                 if (lessonJson.teacher_notes) {
                     const tn = lessonJson.teacher_notes;
                     notesHtml += `
-                        <div class="info-panel"><h4>Strategy & Sequence</h4><p>${tn.teaching_strategy}</p><p>${tn.teaching_sequence}</p></div>
-                        <div class="info-panel"><h4>Classroom Management</h4><p>${tn.classroom_management}</p></div>
-                        <details class="lesson-section" open><summary>Differentiation</summary>
-                            <div class="lesson-section-content">
-                                <p><strong>Slow Learners:</strong> ${tn.support_slow_learners}</p>
-                                <p><strong>Advanced:</strong> ${tn.extension_advanced}</p>
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>Lesson Strategy & Flow</h3>
+                            <div class="lesson-section-content markdown-body" style="margin-top:1rem;">
+                                <p><strong>Strategy:</strong></p>
+                                ${(tn.teaching_strategy||[]).map(s => `<p>${s}</p>`).join('')}
+                                <p><strong>Flow:</strong></p>
+                                ${(tn.lesson_flow||[]).map(s => `<p>${s}</p>`).join('')}
+                                <p><strong>Tips:</strong></p>
+                                ${(tn.teaching_tips||[]).map(s => `<p>${s}</p>`).join('')}
                             </div>
-                        </details>
-                        <details class="lesson-section"><summary>Common Misconceptions</summary>
-                            <div class="lesson-section-content"><p>${tn.common_misconceptions}</p></div>
-                        </details>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <h4>Classroom Management & Assessment</h4>
+                            ${(tn.classroom_management||[]).map(s => `<p>${s}</p>`).join('')}
+                            <hr style="margin:1rem 0; border:none; border-top:1px solid var(--border-color)">
+                            ${(tn.assessment_tips||[]).map(s => `<p>${s}</p>`).join('')}
+                        </div>
+                        
+                        <div class="metric-card">
+                            <h4>Real World Connections</h4>
+                            ${(tn.real_world_connections||[]).map(s => `<p>${s}</p>`).join('')}
+                            <hr style="margin:1rem 0; border:none; border-top:1px solid var(--border-color)">
+                            <h4>Reflections</h4>
+                            ${(tn.reflection_questions||[]).map(s => `<p>${s}</p>`).join('')}
+                        </div>
+                        
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3>Common Misconceptions & FAQ</h3>
+                            <div class="lesson-section-content">
+                                <p><strong>Mistakes:</strong></p>
+                                <ul style="padding-left:20px;">${(tn.common_student_mistakes||[]).map(m => `<li>${m}</li>`).join('')}</ul>
+                                <p style="margin-top:1rem"><strong>Suggested Responses:</strong></p>
+                                <ul style="padding-left:20px;">${(tn.suggested_teacher_responses||[]).map(m => `<li>${m}</li>`).join('')}</ul>
+                                
+                                <details class="lesson-section" style="margin-top:1rem;">
+                                    <summary>Frequently Asked Questions</summary>
+                                    <div class="lesson-section-content">
+                                        ${(tn.frequently_asked_questions||[]).map(q => `<p><strong>Q: ${q.question}</strong><br>A: ${q.answer}</p>`).join('')}
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3>Differentiation & Support</h3>
+                            <div class="form-row" style="margin-top:1rem;">
+                                <div class="info-panel" style="flex:1"><h4>Needs Support</h4><ul style="padding-left:20px">${((tn.differentiated_learning||{}).support||[]).map(s => `<li>${s}</li>`).join('')}</ul></div>
+                                <div class="info-panel" style="flex:1"><h4>Advanced Extension</h4><ul style="padding-left:20px">${((tn.differentiated_learning||{}).advanced||[]).map(s => `<li>${s}</li>`).join('')}</ul></div>
+                            </div>
+                        </div>
                     `;
                 }
+                notesHtml += `</div>`;
                 document.getElementById('tab-notes').innerHTML = notesHtml;
 
                 // 9. Render Student Resources
-                let resHtml = ``;
+                let resHtml = `<div class="dashboard-grid">`;
                 if (lessonJson.student_resources) {
                     const sr = lessonJson.student_resources;
                     resHtml += `
-                        <div class="dashboard-grid">
-                            <div class="activity-card">
-                                <h4>Key Points</h4>
-                                <ul class="outcomes-list">${(sr.key_points||[]).map(k => `<li>${k}</li>`).join('')}</ul>
-                            </div>
-                            <div class="activity-card">
-                                <h4>Mnemonics & Tricks</h4>
-                                <ul class="outcomes-list">${(sr.mnemonics||[]).concat(sr.memory_tricks||[]).map(k => `<li>${k}</li>`).join('')}</ul>
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Key Concepts & Quick Revision</h3>
+                            <div class="lesson-section-content markdown-body" style="margin-top:1rem;">
+                                <p><strong>Revision:</strong></p>
+                                ${(sr.quick_revision||[]).map(s => `<p>${s}</p>`).join('')}
+                                <p><strong>Key Concepts:</strong></p>
+                                <ul style="padding-left:20px;">${(sr.key_concepts||[]).map(k => `<li>${k}</li>`).join('')}</ul>
                             </div>
                         </div>
-                        <div class="info-panel">
-                            <h4>Quick Revision</h4>
-                            <p>${sr.quick_revision_sheet}</p>
+                        
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3>Definitions & Glossary</h3>
+                            <p><strong>Vocabulary:</strong> ${(sr.vocabulary||[]).join(', ')}</p>
+                            <div class="form-row" style="margin-top:1rem;">
+                                <div style="flex:1">
+                                    <h4>Definitions</h4>
+                                    ${(sr.definitions||[]).map(d => `<p><strong>${d.term}:</strong> ${d.definition}</p>`).join('')}
+                                </div>
+                                <div style="flex:1">
+                                    <h4>Glossary</h4>
+                                    ${(sr.glossary||[]).map(d => `<p><strong>${d.term}:</strong> ${d.definition}</p>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" style="grid-column: 1 / -1;">
+                            <h3>Exam Prep & Practice</h3>
+                            <div class="form-row" style="margin-top:1rem;">
+                                <div style="flex:1">
+                                    <h4>Exam Tips</h4>
+                                    <ul style="padding-left:20px">${(sr.exam_tips||[]).map(k => `<li>${k}</li>`).join('')}</ul>
+                                </div>
+                                <div style="flex:1">
+                                    <h4>Practice Questions</h4>
+                                    <ul style="padding-left:20px">${(sr.practice_questions||[]).map(k => `<li>${k}</li>`).join('')}</ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${sr.flashcards && sr.flashcards.length ? `
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3>Flashcards</h3>
+                            <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-top:1rem;">
+                                ${sr.flashcards.map((f, i) => `
+                                    <div class="flashcard info-panel" style="text-align:center; padding:2rem 1rem; cursor:pointer;" onclick="this.classList.toggle('flipped')">
+                                        <div class="front" style="font-weight:bold; font-size:1.1em">${f.question}</div>
+                                        <div class="back" style="display:none; color:var(--text-color); margin-top:1rem; border-top:1px solid var(--border-color); padding-top:1rem">${f.answer}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>` : ''}
+                        
+                        <div class="activity-card" style="grid-column: 1 / -1;">
+                            <h3>Further Exploration & Tricks</h3>
+                            <div class="form-row" style="margin-top:1rem;">
+                                <div style="flex:1">
+                                    <h4>Memory Tricks</h4>
+                                    <ul style="padding-left:20px">${(sr.memory_tricks||[]).map(k => `<li>${k}</li>`).join('')}</ul>
+                                </div>
+                                <div style="flex:1">
+                                    <h4>Interesting Facts</h4>
+                                    <ul style="padding-left:20px">${(sr.interesting_facts||[]).map(k => `<li>${k}</li>`).join('')}</ul>
+                                </div>
+                                <div style="flex:1">
+                                    <h4>Additional Reading</h4>
+                                    <ul style="padding-left:20px">${(sr.additional_reading||[]).map(k => `<li>${k}</li>`).join('')}</ul>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
+                resHtml += `</div>`;
                 const tabRes = document.getElementById('tab-resources');
                 if(tabRes) tabRes.innerHTML = resHtml;
                 

@@ -86,6 +86,8 @@ The JSON object MUST follow this EXACT structure and keys (do not miss any keys)
       "title": (string) "Title of the educational image or diagram",
       "wikimedia_search_query": (string) "Highly specific search query for Wikimedia Commons (e.g. 'human heart diagram SVG' or 'photosynthesis labeled english')",
       "what_it_shows": (string) "Description of the image content",
+      "caption": (string) "A short caption for the image",
+      "short_explanation": (string) "A short explanation of what this image teaches",
       "important_labels": (string) "Key labels to point out to students",
       "teacher_explanation": (string) "How the teacher should explain this diagram",
       "key_observations": (string) "What students should notice",
@@ -99,7 +101,6 @@ The JSON object MUST follow this EXACT structure and keys (do not miss any keys)
       "teacher_script": (string),
       "expected_student_activity": (string)
     }}
-    // IMPORTANT: Generate 4 to 8 of these objects to cover the entire lesson duration.
   ],
   "activities": [
     {{
@@ -120,7 +121,7 @@ The JSON object MUST follow this EXACT structure and keys (do not miss any keys)
   ],
   "quiz": [
     {{
-      "question_type": (string) 'Multiple Choice' | 'True or False' | 'Fill in the Blank' | 'Match the Following' | 'Short Answer' | 'Long Answer' | 'HOTS' | 'Case Study',
+      "question_type": (string),
       "question": (string),
       "options": [(array of strings) Required for MCQ and Match. Leave empty for others],
       "correct_answer": (string),
@@ -132,52 +133,50 @@ The JSON object MUST follow this EXACT structure and keys (do not miss any keys)
     }}
   ],
   "homework": {{
-    "easy": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "medium": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "advanced": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "creative": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "project": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "research": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "parent_activity": {{ "task": (string), "time": (string), "outcome": (string) }},
-    "revision_questions": [(array of strings)],
-    "exam_questions": [(array of strings)]
+    "easy": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "medium": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "advanced": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "creative": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "project": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "research": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "revision": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }},
+    "exam": {{ "title": (string), "objective": (string), "estimated_time": (string), "difficulty_badge": (string), "instructions": [(array of strings)], "submission_format": (string), "rubric": (string) }}
   }},
   "teacher_notes": {{
-    "teaching_strategy": (string),
-    "teaching_sequence": (string),
-    "important_concepts": (string),
-    "common_misconceptions": (string),
+    "teaching_strategy": [(array of strings)],
+    "teaching_tips": [(array of strings)],
+    "lesson_flow": [(array of strings)],
+    "common_student_mistakes": [(array of strings)],
     "frequently_asked_questions": [ {{ "question": (string), "answer": (string) }} ],
-    "classroom_management": (string),
-    "assessment_strategy": (string),
-    "differentiated_learning": (string),
-    "support_slow_learners": (string),
-    "extension_advanced": (string),
-    "cross_curricular": (string),
-    "real_world": (string),
-    "exam_tips": (string),
-    "revision_tips": (string)
+    "suggested_teacher_responses": [(array of strings)],
+    "assessment_tips": [(array of strings)],
+    "classroom_management": [(array of strings)],
+    "differentiated_learning": {{ "support": [(array of strings)], "advanced": [(array of strings)] }},
+    "real_world_connections": [(array of strings)],
+    "reflection_questions": [(array of strings)]
   }},
   "student_resources": {{
-    "key_points": [(array of strings)],
-    "quick_revision_sheet": (string),
+    "quick_revision": [(array of strings)],
+    "key_concepts": [(array of strings)],
+    "definitions": [ {{ "term": (string), "definition": (string) }} ],
     "glossary": [ {{ "term": (string), "definition": (string) }} ],
     "vocabulary": [(array of strings)],
-    "formula_sheet": [(array of strings) if applicable],
-    "important_dates": [(array of strings) if applicable],
-    "mnemonics": [(array of strings)],
+    "flashcards": [ {{ "question": (string), "answer": (string) }} ],
     "memory_tricks": [(array of strings)],
-    "common_mistakes": [(array of strings)],
-    "exam_prep_guide": (string)
+    "practice_questions": [(array of strings)],
+    "exam_tips": [(array of strings)],
+    "additional_reading": [(array of strings)],
+    "interesting_facts": [(array of strings)]
   }}
 }}
 
-Ensure every field is populated with high-quality, professional educational content. Generate exactly 10 multiple choice, 5 true/false, 5 fill-in-blanks, 5 match, 5 short answer, 2 long answer, 3 HOTS, and 2 case study questions for the quiz array (Total 37 questions). Generate at least 5 activities. Respond ONLY with the JSON object.
+Ensure every field is populated with high-quality, professional educational content. Generate exactly 3 multiple choice, 2 true/false, and 2 HOTS questions for the quiz array. Generate exactly 3 activities. Respond ONLY with the JSON object.
 """
 
     models_to_try = [
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant"
+        "llama-3.1-8b-instant",
+        "llama-3.2-3b-preview"
     ]
     
     last_error = None
@@ -192,7 +191,7 @@ Ensure every field is populated with high-quality, professional educational cont
                 ],
                 model=model_name,
                 temperature=0.7,
-                max_tokens=7500,
+                max_tokens=3500,
                 response_format={"type": "json_object"}
             )
             raw_text = response.choices[0].message.content
@@ -222,12 +221,21 @@ Ensure every field is populated with high-quality, professional educational cont
              raise ValueError("Empty response after JSON extraction.")
              
         content_json = json.loads(cleaned)
-        return content_json
-        
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON from AI response: {e}")
-        logger.error(f"Raw response: {raw_text[:500]}")
-        raise Exception("The AI returned an unexpected format. Please try again.")
     except Exception as e:
-        logger.error(f"Error extracting JSON: {e}", exc_info=True)
-        raise Exception(f"Failed to parse content: {str(e)}")
+        logger.warning(f"Failed to parse JSON from AI response: {e}. Falling back to robust generation.")
+        content_json = {}
+        
+    try:
+        from app.services.fallback_generator import apply_fallbacks
+        content_json = apply_fallbacks(content_json, topic, grade)
+    except Exception as e:
+        logger.error(f"Fallback generation failed: {e}")
+        
+    try:
+        from app.services.image_service import fetch_educational_images
+        content_json['visualizations'] = fetch_educational_images(topic)
+    except Exception as e:
+        logger.error(f"Image fetching failed: {e}")
+        content_json['visualizations'] = []
+        
+    return content_json
